@@ -480,9 +480,116 @@ Teor_distr <- ggplot(FA_teor2, aes(x = log(Size))) +
 Teor_distr + geom_point(data = FA_real, aes(x = log(Size), y = log(FA))) + geom_smooth(data = FA_real, aes(x = log(Size), y = log(FA)), method = "lm", color = "black") 
 
 
-library(doBy)
 
 
 
-library(doBy)
-summaryBy(    data = Trait_teor2)
+
+#Подход 5##
+# В этом подходе мы оцениваем парамтеры распределеиня k_ad и k_mult
+
+k_add_param <- summaryBy((Right - Mean_LR)  ~ Trait, data = cop, FUN = function(x) c(mean(x, na.rm = T), sd(x, na.rm = T)))
+
+
+names(k_add_param) <- c("Trait", "K_ad_Right", "SD_K_ad")
+
+# k_add_param - датафрейм со средними и Sd для отклонений правых признаков от среднего значения.  
+
+
+
+k_mult_param <- summaryBy((Right / Mean_LR)  ~ Trait, data = cop, FUN = function(x) c(mean(x, na.rm = T), sd(x, na.rm = T)))
+
+
+names(k_mult_param) <- c("Trait", "K_mult_Right", "SD_K_mult")
+
+
+# k_mult_param - датафрейм со средними и Sd для отклонений правых признаков от среднего значения.  
+
+
+Nsamp <- length(unique(cop$ID))
+
+NTraits <- length(unique(cop$Trait))
+
+
+
+
+Trait_teor3 <- data.frame(ID = cop$ID, Sample = cop$Sample, Trait = cop$Trait) 
+
+
+Trait_teor3 <- merge(Trait_teor3, MLR)
+
+Trait_teor3 <- merge(Trait_teor3, SDLR, by = "Trait")
+
+
+Trait_teor3 <- merge(Trait_teor3, k_add_param, by = "Trait")
+
+Trait_teor3 <- merge(Trait_teor3, k_mult_param, by = "Trait")
+
+
+head(Trait_teor3)
+
+
+
+# Аддитивная модель
+Trait_teor3$Left_teor_ad <- rnorm(nrow(Trait_teor3), Trait_teor3$Mean_LR,Trait_teor3$SDLR)  - rnorm(nrow(Trait_teor3), Trait_teor3$K_ad_Right, Trait_teor3$SD_K_ad)
+
+
+Trait_teor3$Right_teor_ad <- rnorm(nrow(Trait_teor3), Trait_teor3$Mean_LR,Trait_teor3$SDLR) + rnorm(nrow(Trait_teor3), Trait_teor3$K_ad_Right, Trait_teor3$SD_K_ad)
+
+
+
+# Мультипликативная модель
+
+
+Trait_teor3$Left_teor_mult <-  rnorm(nrow(Trait_teor3), Trait_teor3$Mean_LR,Trait_teor3$SDLR) * rnorm(nrow(Trait_teor3), Trait_teor3$K_mult_Right, Trait_teor3$SD_K_mult) 
+
+
+Trait_teor3$Right_teor_mult <-   rnorm(nrow(Trait_teor3), Trait_teor3$Mean_LR,Trait_teor3$SDLR) * rnorm(nrow(Trait_teor3), Trait_teor3$K_mult_Right, Trait_teor3$SD_K_mult) 
+
+
+
+
+
+# Оценка флуктуирующей асимметрии в теоретических выборках и в реальной выборке  
+
+FA_teor3 <- data.frame(FA = rep(NA, length(unique(cop$Trait))))
+
+i=1
+
+for(i in 1:length(unique(cop$Trait))){
+  Trait <- unique(Trait_teor3$Trait)[i]
+  x <- Trait_teor3[Trait_teor3$Trait == Trait, ]
+  FA_teor3$Trait[i] <- as.character(Trait)
+  
+  Size <- MLR$Mean_LR[i]
+  FA_teor3$Size [i] <- Size
+  
+  L_R_ad <- x$Left_teor_ad - x$Right_teor_ad
+  FA_teor3$FA_ad[i] <- sd(L_R_ad, na.rm = T)^2/Size^2
+  
+  L_R_mult <- x$Left_teor_mult - x$Right_teor_mult
+  FA_teor3$FA_mult[i] <- sd(L_R_mult, na.rm = T)^2/Size^2
+  # 
+  # L_R_comb <- x$Left_teor_comb - x$Right_teor_comb
+  # FA_teor2$FA_comb[i] <- sd(L_R_comb, na.rm = T)^2/Size^2
+  # 
+}          
+
+
+Teor_distr <- ggplot(FA_teor3, aes(x = log(Size))) + 
+  geom_point(aes(y = log(FA_ad)), color = "blue") + geom_smooth(aes(y = log(FA_ad)), color = "blue", method = "lm", se = F) +   
+  geom_point(aes(y = log(FA_mult)), color = "red") + geom_smooth(aes(y = log(FA_mult)), color = "red", method = "lm", se = F)  +
+  theme_bw() +
+  ylab("log(FA)")
+
+
+
+Teor_distr + geom_point(data = FA_real, aes(x = log(Size), y = log(FA))) + geom_smooth(data = FA_real, aes(x = log(Size), y = log(FA)), method = "lm", color = "black") 
+
+
+
+
+
+
+Means_for_traits <- summaryBy(Mean_LR + Left_teor_ad + Left_teor_mult ~ Trait, data = Trait_teor3 )
+
+
