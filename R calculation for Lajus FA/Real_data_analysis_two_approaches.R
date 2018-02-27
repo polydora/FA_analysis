@@ -116,6 +116,8 @@ Kmult <- rnorm(Nsamp*NTraits, k_mult_mean, k_mult_sd*k_mu )#Коэффициен
 Trait_teor$Right_teor_mult <- Trait_teor$Mean_LR * Kmult  
 
 
+ggplot(Trait_teor, aes(x =(Right_teor_ad - Mean_LR)  )) + geom_histogram() + facet_wrap(~Trait)
+
 
 #Комбинативная модель
 
@@ -123,7 +125,7 @@ Kad <- rnorm(Nsamp*NTraits, k_add_mean, k_add_sd*k_ad) #Коэффициент �
 
 Kmult <- rnorm(Nsamp*NTraits, k_mult_mean, k_mult_sd*k_mu )#Коэффициент асимметрии при мультипликативной модели.
 
-Trait_teor$Left_teor_comb <- Trait_teor$Mean_LR * Kmult + Kad
+Trait_teor$Left_teor_comb <- Trait_teor$Mean_LR * (Kmult/2) + Kad/2
 
 
 
@@ -131,7 +133,7 @@ Kad <- rnorm(Nsamp*NTraits, k_add_mean, k_add_sd*k_ad) #Коэффициент �
 
 Kmult <- rnorm(Nsamp*NTraits, k_mult_mean, k_mult_sd*k_mu )#Коэффициент асимметрии при мультипликативной модели.
 
-Trait_teor$Right_teor_comb <- Trait_teor$Mean_LR * Kmult + Kad
+Trait_teor$Right_teor_comb <- Trait_teor$Mean_LR * (Kmult/2) + Kad/2
 
 
 
@@ -214,6 +216,7 @@ for(i in 1:nrow(Trait_teor3)) Kad[i] <- rnorm(1, Trait_teor3$K_ad_Right[i], Trai
 Trait_teor3$Right_teor_ad <- rnorm(nrow(Trait_teor3), Trait_teor3$Mean_LR,Trait_teor3$SDLR) + Kad
 
 
+ggplot(Trait_teor3, aes(x =(Right_teor_ad - Mean_LR)  )) + geom_histogram() + facet_wrap(~Trait)
 
 # Мультипликативная модель
 
